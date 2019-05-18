@@ -1,0 +1,97 @@
+version: "2"
+services:
+  edge:
+    networks:
+      - mesh
+    image: deciphernow/gm-proxy:latest
+    environment:
+      - PROXY_DYNAMIC=true
+      - PORT=8080
+      - XDS_CLUSTER=region-1
+      - XDS_HOST=gm-xds
+      - XDS_PORT=18000
+      - SERVICE_PORT=8080
+      - ZK_ANNOUNCE_PATH=/services/edge/1.0
+      - ZK_ADDRS=zk:2181
+    ports:
+      - 9443:8080
+      - 8001:8001
+    depends_on:
+      - zk
+
+  gm-xds:
+    networks:
+      - mesh
+    image: deciphernow/gm-xds:latest
+    ports:
+      - "18000:18000"
+      - "18001:18001"
+      - "18003:18003"
+      - "18090:18090"
+      - "9000:9000"
+    environment:
+      - ZK_DISCOVER=true
+      - ZK_SERVERS=zk:2181
+      - ZK_BASE_PATH=/services
+      - LOG_LEVEL=debug
+    depends_on:
+      - zk
+
+  example-service-proxy:
+    networks:
+      - mesh
+    image: deciphernow/gm-proxy:latest
+    environment:
+      - PROXY_DYNAMIC=true
+      - XDS_CLUSTER=region-1
+      - XDS_HOST=gm-xds
+      - XDS_PORT=18000
+      - PORT=8080
+      - SERVICE_HOST=example-service
+      - SERVICE_PORT=3000
+      - ZK_ANNOUNCE_PATH=/services/example-service/1.0
+      - ZK_ADDRS=zk:2181
+      - METRICS_PORT=8081
+    depends_on:
+      - zk
+
+  example-service:
+    networks:
+      - mesh
+    image: deciphernow/example-service:latest
+    depends_on:
+      - example-service-proxy
+
+  # explorer-proxy:
+  #   networks:
+  #     - mesh
+  #   image: deciphernow/gm-proxy:latest
+  #   environment:
+  #     - PROXY_DYNAMIC=true
+  #     - XDS_CLUSTER=region-1
+  #     - XDS_HOST=gm-xds
+  #     - XDS_PORT=18000
+  #     - PORT=8080
+  #     - SERVICE_HOST=dashboard
+  #     - SERVICE_PORT=1337
+  #     - ZK_ANNOUNCE_PATH=/services/explorer/0.1
+  #     - ZK_ADDRS=zk:2181
+  #     - METRICS_PORT=8081
+  #   depends_on:
+  #     - zk
+  # explorer:
+  #   networks:
+  #     - mesh
+  #   image: bcmendoza/xds-explorer:latest
+  #   depends_on:
+  #     - explorer-proxy
+
+  zk:
+    networks:
+      - mesh
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+
+networks:
+  mesh: {}
