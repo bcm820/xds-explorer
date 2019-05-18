@@ -3,14 +3,14 @@
 blank=$(printf "%-50s" " ")
 rm -rf ../src/envoy/
 
-# envoyDir=/usr/local/Cellar/protobuf/3.7.1/include/envoy
-envoyDir=../envoy
+# pathToEnvoy=/usr/local/Cellar/protobuf/3.7.1/include
+pathToEnvoy=..
 
-for filePath in $(find $envoyDir -name '*.proto'); do
+for filePath in $(find $pathToEnvoy/envoy -name '*.proto'); do
   
   inputDir=$(dirname $filePath)
   fullFilename=$(basename $filePath)
-  outputDir="../src/${inputDir#"../"}"
+  outputDir="../src/${inputDir#"$pathToEnvoy"}"
   filename="${fullFilename%.*}"
 
   echo -ne "--> Compiling $fullFilename...\r"
